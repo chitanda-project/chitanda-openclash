@@ -113,7 +113,12 @@ if [ -n "$DIRECT_CORE_URL" ] || [ "$CORE_TYPE" = "Meta" -a "$CHITANDA_CORE_VERSI
          fi
       else
          if [ "$CORE_TYPE" = "Meta" ]; then
-            DOWNLOAD_URL="${CHITANDA_CORE_RELEASE}/${CORE_LV}/clash-${CPU_MODEL}.tar.gz"
+            CHITANDA_RAW_URL="${CHITANDA_CORE_RELEASE}/${CORE_LV}/clash-${CPU_MODEL}.tar.gz"
+            if [ "$github_address_mod" != "0" ] && [ "$github_address_mod" != "https://cdn.jsdelivr.net/" ] && [ "$github_address_mod" != "https://fastly.jsdelivr.net/" ] && [ "$github_address_mod" != "https://testingcf.jsdelivr.net/" ]; then
+               DOWNLOAD_URL="${github_address_mod}${CHITANDA_RAW_URL}"
+            else
+               DOWNLOAD_URL="${CHITANDA_RAW_URL}"
+            fi
          elif [ "$github_address_mod" != "0" ]; then
             if [ "$github_address_mod" == "https://cdn.jsdelivr.net/" ] || [ "$github_address_mod" == "https://fastly.jsdelivr.net/" ] || [ "$github_address_mod" == "https://testingcf.jsdelivr.net/" ]; then
                DOWNLOAD_URL="${github_address_mod}gh/vernesong/OpenClash@core/${CORE_URL_PATH}/clash-${CPU_MODEL}.tar.gz"
@@ -130,6 +135,13 @@ if [ -n "$DIRECT_CORE_URL" ] || [ "$CORE_TYPE" = "Meta" -a "$CHITANDA_CORE_VERSI
 
       while [ "$retry_count" -lt "$max_retries" ]; do
          retry_count=$((retry_count + 1))
+         if [ "$CORE_TYPE" = "Meta" ] && [ "$retry_count" -gt 1 ]; then
+            if [ "$retry_count" -eq 2 ]; then
+               DOWNLOAD_URL="https://ghfast.top/${CHITANDA_RAW_URL}"
+            elif [ "$retry_count" -eq 3 ]; then
+               DOWNLOAD_URL="https://gh-proxy.com/${CHITANDA_RAW_URL}"
+            fi
+         fi
 
          rm -rf "$DOWNLOAD_FILE" "$TMP_FILE" >/dev/null 2>&1
 

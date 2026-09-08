@@ -9,7 +9,6 @@ local M = {}
 
 local VERSION_CACHE_FILE = "/tmp/openclash_version_history.json"
 local CDN_CACHE_FILE = "/tmp/openclash_cdn_info.json"
-local CHITANDA_MIHOMO_VERSION_URL = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
 
 local function trim(s)
 	if not s then return "" end
@@ -194,8 +193,26 @@ local function try_fetch(urls, validator)
 	return ""
 end
 
-local function fetch_chitanda_mihomo_version()
-	local raw = try_fetch({ CHITANDA_MIHOMO_VERSION_URL }, function(buf)
+local function build_chitanda_version_urls(mod)
+	local raw = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
+	local jsdelivr = "https://testingcf.jsdelivr.net/gh/violetaini/chitanda@main/releases/mihomo/version.txt"
+	local jsdelivr_fastly = "https://fastly.jsdelivr.net/gh/violetaini/chitanda@main/releases/mihomo/version.txt"
+	if mod == "0" or mod == "" or not mod then
+		local urls = { raw, jsdelivr, jsdelivr_fastly }
+		for _, cdn in ipairs(cdn_list()) do
+			urls[#urls + 1] = cdn .. raw
+		end
+		return urls
+	end
+	if mod == "https://cdn.jsdelivr.net/" or mod == "https://fastly.jsdelivr.net/" or mod == "https://testingcf.jsdelivr.net/" then
+		return { mod .. "gh/violetaini/chitanda@main/releases/mihomo/version.txt", raw, jsdelivr }
+	end
+	return { mod .. raw, raw, jsdelivr }
+end
+
+local function fetch_chitanda_mihomo_version(mod)
+	local urls = build_chitanda_version_urls(mod)
+	local raw = try_fetch(urls, function(buf)
 		local version = trim((buf or ""):match("^[^\n\r]*") or "")
 		return version:match("^v?%d+%.%d+%.%d+[%w%._%-]*$") ~= nil
 	end)
@@ -514,7 +531,10 @@ function M.fetch_version_history(branch, force, cdn, latest_only)
 		end
 
 		if not cur_oix then
-			core_meta_latest = fetch_chitanda_mihomo_version()
+			core_meta_latest = fetch_chitanda_mihomo_version(github_address_mod)
+			if core_meta_latest ~= "" then
+				result.core_meta = { { version = core_meta_latest, date = os.date("!%Y-%m-%dT%H:%M:%SZ"), sha = "chitanda" } }
+			end
 
 			local core_raw = try_fetch(build_fetch_urls(github_address_mod, "core/" .. branch .. "/core_version"))
 			if core_raw and core_raw ~= "" then
@@ -544,7 +564,7 @@ function M.fetch_version_history(branch, force, cdn, latest_only)
 			blk.cached_at = result.cached_at
 			blk.oix = cur_oix
 			blk.plugin = nil
-			blk.core_meta = nil
+			blk.core_meta = result.core_meta
 			blk.core_smart = nil
 			blk.oix_ver = nil
 			parsed[branch] = blk
@@ -612,6 +632,13 @@ function M.fetch_version_history(branch, force, cdn, latest_only)
 					end
 				end
 			end
+		end
+	end
+
+	if not cur_oix then
+		local c_ver = fetch_chitanda_mihomo_version(github_address_mod)
+		if c_ver and c_ver ~= "" then
+			result.core_meta = { { version = c_ver, date = os.date("!%Y-%m-%dT%H:%M:%SZ"), sha = "chitanda" } }
 		end
 	end
 
