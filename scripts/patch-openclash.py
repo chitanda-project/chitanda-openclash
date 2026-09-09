@@ -198,22 +198,36 @@ end
     if os.path.exists(controller_file):
         with open(controller_file, "r", encoding="utf-8") as f:
             c_content = f.read()
-        target_c = 'local raw_ref = (core_ver ~= "" and core_ver ~= "__latest__") and core_ver or "core"\n\t\t\traw_core_url = "https://raw.githubusercontent.com/vernesong/OpenClash/" .. raw_ref .. "/" .. branch .. "/core_version"'
-        replacement_c = """raw_core_url = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
-			if cdn and cdn ~= "" and not is_custom_cdn(cdn) then
-				if cdn:match("jsdelivr") then
-					core_url = cdn .. "gh/violetaini/chitanda@main/releases/mihomo/version.txt"
-				else
-					core_url = cdn .. raw_core_url
-				end
-			else
-				core_url = raw_core_url
-			end"""
-        if "raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt" not in c_content and target_c in c_content:
-            c_content = c_content.replace(target_c, replacement_c, 1)
-            with open(controller_file, "w", encoding="utf-8") as f:
-                f.write(c_content)
-            print("  [+] Patched openclash.lua (Chitanda CDN core version probe)")
+        target_c1 = 'local function build_version_url(cdn, file_type)\n\t\tif file_type == "core" and is_oix() then'
+        replacement_c1 = '''local function build_version_url(cdn, file_type)
+\t\tif file_type == "core" and not is_oix() then
+\t\t\tlocal chitanda_raw = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
+\t\t\tlocal ctype = classify_cdn(cdn)
+\t\t\tif ctype == "jsdelivr" then
+\t\t\t\treturn cdn .. "gh/violetaini/chitanda@main/releases/mihomo/version.txt"
+\t\t\telseif ctype == "proxy" then
+\t\t\t\treturn cdn .. chitanda_raw
+\t\t\tend
+\t\t\treturn chitanda_raw
+\t\tend
+
+\t\tif file_type == "core" and is_oix() then'''
+
+        target_c2 = 'local raw_ref = (core_ver ~= "" and core_ver ~= "__latest__") and core_ver or "core"\n\t\t\traw_core_url = "https://raw.githubusercontent.com/vernesong/OpenClash/" .. raw_ref .. "/" .. branch .. "/core_version"'
+        replacement_c2 = '''if not is_oix() then
+\t\t\traw_core_url = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
+\t\telse
+\t\t\tlocal raw_ref = (core_ver ~= "" and core_ver ~= "__latest__") and core_ver or "core"
+\t\t\traw_core_url = "https://raw.githubusercontent.com/vernesong/OpenClash/" .. raw_ref .. "/" .. branch .. "/core_version"
+\t\tend'''
+
+        if target_c1 in c_content:
+            c_content = c_content.replace(target_c1, replacement_c1, 1)
+        if target_c2 in c_content:
+            c_content = c_content.replace(target_c2, replacement_c2, 1)
+        with open(controller_file, "w", encoding="utf-8") as f:
+            f.write(c_content)
+        print("  [+] Patched openclash.lua (Chitanda CDN core version probe)")
 
     print("[*] OpenClash Chitanda patching complete!")
 
