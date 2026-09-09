@@ -154,6 +154,12 @@ end
             if t_retry in sh_content:
                 sh_content = sh_content.replace(t_retry, t_retry + retry_fallback, 1)
 
+        # Override direct url if pointing to vernesong for Meta
+        old_direct = 'if [ -n "$2" ] && echo "$2" | grep -qE \'^https?://\'; then'
+        new_direct = 'if [ -n "$2" ] && echo "$2" | grep -qE \'^https?://\' && ! ([ "$CORE_TYPE" = "Meta" ] && echo "$2" | grep -q "vernesong/OpenClash"); then'
+        if old_direct in sh_content:
+            sh_content = sh_content.replace(old_direct, new_direct, 1)
+
         # Version file recording on success
         if "CHITANDA_CORE_VERSION_FILE" in sh_content and "printf '%s\\n' \"$CORE_LV\" > \"$CHITANDA_CORE_VERSION_FILE\"" not in sh_content:
             t5 = 'LOG_TIP "【"$CORE_TYPE"】Core Update Successful"'
@@ -163,6 +169,51 @@ end
         with open(sh_file, "w", encoding="utf-8") as f:
             f.write(sh_content)
         print("  [+] Patched openclash_core.sh (with native proxy support & CDN retry fallback)")
+
+    # 3. Patch update.htm
+    htm_file = os.path.join(repo_dir, "luci-app-openclash", "luasrc", "view", "openclash", "update.htm")
+    if os.path.exists(htm_file):
+        with open(htm_file, "r", encoding="utf-8") as f:
+            htm_content = f.read()
+        target_htm = "if (type === 'plugin') {"
+        replacement_htm = """if (type === 'core' && !_isOix && smart_enable.value !== '1') {
+            filename = 'clash-' + arch + '.tar.gz';
+            var cv = (version && version !== '__latest__' && version.indexOf('alpha') === -1) ? version : 'v1.19.30';
+            var rawChitanda = 'https://github.com/violetaini/chitanda/releases/download/' + cv + '/' + filename;
+            if (addr && addr !== '' && classifyAddr(addr) !== 'raw' && !isJsDelivr) {
+                return addr + rawChitanda;
+            }
+            return rawChitanda;
+        }
+
+        if (type === 'plugin') {"""
+        if "rawChitanda" not in htm_content and target_htm in htm_content:
+            htm_content = htm_content.replace(target_htm, replacement_htm, 1)
+            with open(htm_file, "w", encoding="utf-8") as f:
+                f.write(htm_content)
+            print("  [+] Patched update.htm (Chitanda Meta core download URL)")
+
+    # 4. Patch openclash.lua
+    controller_file = os.path.join(repo_dir, "luci-app-openclash", "luasrc", "controller", "openclash.lua")
+    if os.path.exists(controller_file):
+        with open(controller_file, "r", encoding="utf-8") as f:
+            c_content = f.read()
+        target_c = 'local raw_ref = (core_ver ~= "" and core_ver ~= "__latest__") and core_ver or "core"\n\t\t\traw_core_url = "https://raw.githubusercontent.com/vernesong/OpenClash/" .. raw_ref .. "/" .. branch .. "/core_version"'
+        replacement_c = """raw_core_url = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
+			if cdn and cdn ~= "" and not is_custom_cdn(cdn) then
+				if cdn:match("jsdelivr") then
+					core_url = cdn .. "gh/violetaini/chitanda@main/releases/mihomo/version.txt"
+				else
+					core_url = cdn .. raw_core_url
+				end
+			else
+				core_url = raw_core_url
+			end"""
+        if "raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt" not in c_content and target_c in c_content:
+            c_content = c_content.replace(target_c, replacement_c, 1)
+            with open(controller_file, "w", encoding="utf-8") as f:
+                f.write(c_content)
+            print("  [+] Patched openclash.lua (Chitanda CDN core version probe)")
 
     print("[*] OpenClash Chitanda patching complete!")
 

@@ -326,6 +326,16 @@
             return proxyURL;
         }
 
+        if (type === 'core' && !_isOix && smart_enable.value !== '1') {
+            filename = 'clash-' + arch + '.tar.gz';
+            var cv = (version && version !== '__latest__' && version.indexOf('alpha') === -1) ? version : 'v1.19.30';
+            var rawChitanda = 'https://github.com/violetaini/chitanda/releases/download/' + cv + '/' + filename;
+            if (addr && addr !== '' && classifyAddr(addr) !== 'raw' && !isJsDelivr) {
+                return addr + rawChitanda;
+            }
+            return rawChitanda;
+        }
+
         if (type === 'plugin') {
             var verNoV = version.replace(/^v/, '');
             if (_pkgType === 'apk') {

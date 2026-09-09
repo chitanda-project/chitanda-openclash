@@ -62,6 +62,15 @@ if [ -z "$DIRECT_CORE_URL" ]; then
       CORE_LV=$(jsonfilter -i /tmp/openclash_version_history.json -e "@.${RELEASE_BRANCH}.latest.core_smart" 2>/dev/null)
    else
       CORE_LV=$(jsonfilter -i /tmp/openclash_version_history.json -e "@.${RELEASE_BRANCH}.latest.core_meta" 2>/dev/null)
+      if [ -z "$CORE_LV" ] || echo "$CORE_LV" | grep -q "alpha-g"; then
+         CORE_LV=$(jsonfilter -i /tmp/openclash_version_history.json -e "@.${RELEASE_BRANCH}.core_meta[0].version" 2>/dev/null)
+      fi
+      if [ -z "$CORE_LV" ] || echo "$CORE_LV" | grep -q "alpha-g"; then
+         CORE_LV=$(curl -fsSL -m 5 "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt" 2>/dev/null | tr -d ' \r\n')
+      fi
+      if [ -z "$CORE_LV" ] || echo "$CORE_LV" | grep -q "alpha-g"; then
+         CORE_LV="v1.19.30"
+      fi
    fi
    if [ -z "$CORE_LV" ]; then
       LOG_ERROR "【"$CORE_TYPE"】Core Version Check Error, Please Try Again Later..."
@@ -78,30 +87,26 @@ else
    mkdir -p /tmp/etc/openclash/core
 fi
 
-TARGET_CORE_PATH="$meta_core_path"
-CHITANDA_CORE_VERSION_FILE="$meta_core_path/.chitanda-mihomo-version"
-CHITANDA_CORE_VERSION=$(cat "$CHITANDA_CORE_VERSION_FILE" 2>/dev/null)
-CORE_CV=$($TARGET_CORE_PATH -v 2>/dev/null |awk -F ' ' '{print $3}' |head -1)
-TMP_FILE="${TARGET_CORE_PATH}.new.$$"
-
 if [ "$CORE_TYPE" = "Oix" ]; then
-   CORE_URL_PATH=""
+   TARGET_CORE_PATH="$meta_core_path"
    DOWNLOAD_FILE="/tmp/clash_meta.gz"
-elif [ "$CORE_TYPE" = "Smart" ]; then
-   CORE_URL_PATH="$RELEASE_BRANCH/smart"
-   DOWNLOAD_FILE="/tmp/clash_meta.tar.gz"
 else
-   CORE_URL_PATH="$RELEASE_BRANCH/meta"
+   TARGET_CORE_PATH="$meta_core_path"
+   CHITANDA_CORE_VERSION_FILE="$meta_core_path/.chitanda-mihomo-version"
+   CHITANDA_CORE_VERSION=$(cat "$CHITANDA_CORE_VERSION_FILE" 2>/dev/null)
    DOWNLOAD_FILE="/tmp/clash_meta.tar.gz"
 fi
+
+CORE_CV=$($TARGET_CORE_PATH -v 2>/dev/null |awk -F ' ' '{print $3}' |head -1)
+TMP_FILE="${TARGET_CORE_PATH}.new.$$"
 
 [ "$C_CORE_TYPE" != "$CORE_TYPE" ] || [ -z "$C_CORE_TYPE" ] && restart=1
 
 if [ -n "$DIRECT_CORE_URL" ] || [ "$CORE_TYPE" = "Meta" -a "$CHITANDA_CORE_VERSION" != "$CORE_LV" ] || [ "$CORE_CV" != "$CORE_LV" ] || [ -z "$CORE_CV" ]; then
    if [ "$CPU_MODEL" != 0 ]; then
       LOG_TIP "【"$CORE_TYPE"】Core Downloading, Please Try to Download and Upload Manually If Fails"
-      # If $2 is a full download URL, use it directly
-      if [ -n "$2" ] && echo "$2" | grep -qE '^https?://'; then
+      # If $2 is a full download URL, use it directly (unless it is a Meta core pointing to upstream vernesong)
+      if [ -n "$2" ] && echo "$2" | grep -qE '^https?://' && ! ([ "$CORE_TYPE" = "Meta" ] && echo "$2" | grep -q "vernesong/OpenClash"); then
          DOWNLOAD_URL="$2"
       elif [ "$CORE_TYPE" = "Oix" ]; then
          OIX_CORE_URL="https://github.com/vernesong/mihomo-oix/releases/download/Pre-Alpha/mihomo-${CPU_MODEL}-${CORE_LV}.gz"

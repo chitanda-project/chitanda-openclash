@@ -3289,8 +3289,16 @@ function action_cdn_info()
 		local core_url = build_version_url(cdn, "core")
 		local raw_core_url = ""
 		if not is_oix() then
-			local raw_ref = (core_ver ~= "" and core_ver ~= "__latest__") and core_ver or "core"
-			raw_core_url = "https://raw.githubusercontent.com/vernesong/OpenClash/" .. raw_ref .. "/" .. branch .. "/core_version"
+			raw_core_url = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
+			if cdn and cdn ~= "" and not is_custom_cdn(cdn) then
+				if cdn:match("jsdelivr") then
+					core_url = cdn .. "gh/violetaini/chitanda@main/releases/mihomo/version.txt"
+				else
+					core_url = cdn .. raw_core_url
+				end
+			else
+				core_url = raw_core_url
+			end
 		end
 		local cmd = string.format([[
 PLUGIN_VER=""
