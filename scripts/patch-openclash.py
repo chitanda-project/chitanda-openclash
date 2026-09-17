@@ -229,43 +229,6 @@ end
             f.write(c_content)
         print("  [+] Patched openclash.lua (Chitanda CDN core version probe)")
 
-    # 5. Patch openclash init.d (IPv6 fake-ip route on utun)
-    init_file = os.path.join(repo_dir, "luci-app-openclash", "root", "etc", "init.d", "openclash")
-    if os.path.exists(init_file):
-        with open(init_file, "r", encoding="utf-8") as f:
-            init_content = f.read()
-
-        t_start = 'ip -6 rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" pref 1888\n         fi'
-        r_start = ('ip -6 rule add fwmark "$PROXY_FWMARK" table "$PROXY_ROUTE_TABLE" pref 1888\n'
-                   '            [ -z "$fakeip_range6" ] && fakeip_range6=$(uci_get_config "fakeip_range6" || echo "fdfe:dcba:9876::1/64")\n'
-                   '            [ "$fakeip_range6" = "0" ] && fakeip_range6="fdfe:dcba:9876::1/64"\n'
-                   '            ip -6 route replace "$fakeip_range6" dev utun 2>/dev/null\n'
-                   '         fi')
-
-        t_del = 'ip -6 route del default dev utun table "$PROXY_ROUTE_TABLE"\n\n   if [ -n "$FW4" ]; then'
-        r_del = ('ip -6 route del default dev utun table "$PROXY_ROUTE_TABLE"\n'
-                 '   [ -z "$fakeip_range6" ] && fakeip_range6=$(uci_get_config "fakeip_range6" || echo "fdfe:dcba:9876::1/64")\n'
-                 '   [ "$fakeip_range6" = "0" ] && fakeip_range6="fdfe:dcba:9876::1/64"\n'
-                 '   ip -6 route del "$fakeip_range6" dev utun 2>/dev/null\n\n'
-                 '   if [ -n "$FW4" ]; then')
-
-        # Check if upstream already implemented ANY route pointing fake-ip to utun
-        has_upstream_fix = any(
-            ("dev utun" in line and ("fakeip" in line.lower() or "9876" in line))
-            for line in init_content.splitlines()
-        )
-
-        if not has_upstream_fix:
-            if t_start in init_content:
-                init_content = init_content.replace(t_start, r_start, 1)
-            if t_del in init_content:
-                init_content = init_content.replace(t_del, r_del, 1)
-            with open(init_file, "w", encoding="utf-8") as f:
-                f.write(init_content)
-            print("  [+] Patched openclash init.d (IPv6 fake-ip utun route)")
-        else:
-            print("  [.] Upstream already includes IPv6 fake-ip utun route, skipping patch.")
-
     print("[*] OpenClash Chitanda patching complete!")
 
 if __name__ == "__main__":
