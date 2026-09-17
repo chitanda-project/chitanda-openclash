@@ -1,0 +1,24 @@
+#!/bin/sh
+# OpenWrt Interface Hotplug Script
+# Target: /etc/hotplug.d/iface/98-services-reload
+#
+# 功能：
+# 监听 WAN 接口重拨 (ifup wan) 事件。
+# 1. 解决 PPPoE 重拨换 IP 后，对外主动发起的长连接（如各类探针客户端）卡死在旧 IP 上的问题。
+# 2. 补刀确保 utun 设备存在时 IPv6 Fake-IP 路由正常。
+
+[ "$ACTION" = "ifup" ] || exit 0
+
+if [ "$INTERFACE" = "wan" ]; then
+    # 保证 OpenClash IPv6 Fake-IP 路由正常
+    if ip link show utun >/dev/null 2>&1; then
+        fakeip_range6=$(uci -q get openclash.config.fakeip_range6)
+        [ -z "$fakeip_range6" ] || [ "$fakeip_range6" = "0" ] && fakeip_range6="fdfe:dcba:9876::1/64"
+        ip -6 route replace "$fakeip_range6" dev utun 2>/dev/null
+    fi
+
+    # 重启对外主动长连的探针客户端（如 komari-agent，按需开启）
+    if [ -x /etc/init.d/komari-agent ]; then
+        /etc/init.d/komari-agent restart >/dev/null 2>&1
+    fi
+fi

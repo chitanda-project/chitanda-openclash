@@ -1,0 +1,16 @@
+#!/bin/sh
+# OpenWrt Network Device Hotplug Script
+# Target: /etc/hotplug.d/net/98-openclash-utun
+#
+# 功能：
+# 监听 utun 虚拟网卡创建事件，自动补齐 IPv6 Fake-IP 范围路由 (/64)。
+# 解决 OpenClash TUN 模式下，因 utun 掩码为 /126 导致大于 ::3 的 Fake-IP 发生 ENETUNREACH 的缺陷。
+# 本脚本完全独立于 OpenClash 包本身，不受 OpenClash 更新与重装影响。
+
+[ "$DEVICENAME" = "utun" ] || exit 0
+[ "$ACTION" = "add" ] || exit 0
+
+sleep 1
+fakeip_range6=$(uci -q get openclash.config.fakeip_range6)
+[ -z "$fakeip_range6" ] || [ "$fakeip_range6" = "0" ] && fakeip_range6="fdfe:dcba:9876::1/64"
+ip -6 route replace "$fakeip_range6" dev utun 2>/dev/null
