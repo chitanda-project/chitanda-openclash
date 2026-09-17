@@ -249,7 +249,13 @@ end
                  '   ip -6 route del "$fakeip_range6" dev utun 2>/dev/null\n\n'
                  '   if [ -n "$FW4" ]; then')
 
-        if "fakeip_range6" not in init_content or "replace \"$fakeip_range6\" dev utun" not in init_content:
+        # Check if upstream already implemented ANY route pointing fake-ip to utun
+        has_upstream_fix = any(
+            ("dev utun" in line and ("fakeip" in line.lower() or "9876" in line))
+            for line in init_content.splitlines()
+        )
+
+        if not has_upstream_fix:
             if t_start in init_content:
                 init_content = init_content.replace(t_start, r_start, 1)
             if t_del in init_content:
@@ -257,6 +263,8 @@ end
             with open(init_file, "w", encoding="utf-8") as f:
                 f.write(init_content)
             print("  [+] Patched openclash init.d (IPv6 fake-ip utun route)")
+        else:
+            print("  [.] Upstream already includes IPv6 fake-ip utun route, skipping patch.")
 
     print("[*] OpenClash Chitanda patching complete!")
 
