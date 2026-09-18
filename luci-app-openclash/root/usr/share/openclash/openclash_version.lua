@@ -1,4 +1,4 @@
-#!/usr/bin/lua
+﻿#!/usr/bin/lua
 
 require "nixio"
 require "luci.model.uci"
@@ -194,9 +194,9 @@ local function try_fetch(urls, validator)
 end
 
 local function build_chitanda_version_urls(mod)
-	local raw = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
-	local jsdelivr = "https://testingcf.jsdelivr.net/gh/violetaini/chitanda@main/releases/mihomo/version.txt"
-	local jsdelivr_fastly = "https://fastly.jsdelivr.net/gh/violetaini/chitanda@main/releases/mihomo/version.txt"
+	local raw = "https://raw.githubusercontent.com/chitanda-project/chitanda/main/releases/mihomo/version.txt"
+	local jsdelivr = "https://testingcf.jsdelivr.net/gh/chitanda-project/chitanda@main/releases/mihomo/version.txt"
+	local jsdelivr_fastly = "https://fastly.jsdelivr.net/gh/chitanda-project/chitanda@main/releases/mihomo/version.txt"
 	if mod == "0" or mod == "" or not mod then
 		local urls = { raw, jsdelivr, jsdelivr_fastly }
 		for _, cdn in ipairs(cdn_list()) do
@@ -205,7 +205,7 @@ local function build_chitanda_version_urls(mod)
 		return urls
 	end
 	if mod == "https://cdn.jsdelivr.net/" or mod == "https://fastly.jsdelivr.net/" or mod == "https://testingcf.jsdelivr.net/" then
-		return { mod .. "gh/violetaini/chitanda@main/releases/mihomo/version.txt", raw, jsdelivr }
+		return { mod .. "gh/chitanda-project/chitanda@main/releases/mihomo/version.txt", raw, jsdelivr }
 	end
 	return { mod .. raw, raw, jsdelivr }
 end

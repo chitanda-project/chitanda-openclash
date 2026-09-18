@@ -1,4 +1,4 @@
-<%
+﻿<%
     local fs = require "luci.openclash"
     local plugin_version = fs.oc_version()
     local version_tab = (self and self.version_tab) or false
@@ -329,7 +329,7 @@
         if (type === 'core' && !_isOix && smart_enable.value !== '1') {
             filename = 'clash-' + arch + '.tar.gz';
             var cv = (version && version !== '__latest__' && version.indexOf('alpha') === -1) ? version : 'v1.19.30';
-            var rawChitanda = 'https://github.com/violetaini/chitanda/releases/download/' + cv + '/' + filename;
+            var rawChitanda = 'https://github.com/chitanda-project/chitanda/releases/download/' + cv + '/' + filename;
             if (addr && addr !== '' && classifyAddr(addr) !== 'raw' && !isJsDelivr) {
                 return addr + rawChitanda;
             }

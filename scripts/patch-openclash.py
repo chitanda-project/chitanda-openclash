@@ -1,4 +1,4 @@
-import os
+﻿import os
 import sys
 
 def patch_openclash(repo_dir):
@@ -12,14 +12,14 @@ def patch_openclash(repo_dir):
             lua_content = f.read()
 
         # Remove legacy URL constant if present
-        legacy_url = 'local CHITANDA_MIHOMO_VERSION_URL = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"\n'
+        legacy_url = 'local CHITANDA_MIHOMO_VERSION_URL = "https://raw.githubusercontent.com/chitanda-project/chitanda/main/releases/mihomo/version.txt"\n'
         if legacy_url in lua_content:
             lua_content = lua_content.replace(legacy_url, "")
 
         chitanda_lua_funcs = r"""local function build_chitanda_version_urls(mod)
-	local raw = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
-	local jsdelivr = "https://testingcf.jsdelivr.net/gh/violetaini/chitanda@main/releases/mihomo/version.txt"
-	local jsdelivr_fastly = "https://fastly.jsdelivr.net/gh/violetaini/chitanda@main/releases/mihomo/version.txt"
+	local raw = "https://raw.githubusercontent.com/chitanda-project/chitanda/main/releases/mihomo/version.txt"
+	local jsdelivr = "https://testingcf.jsdelivr.net/gh/chitanda-project/chitanda@main/releases/mihomo/version.txt"
+	local jsdelivr_fastly = "https://fastly.jsdelivr.net/gh/chitanda-project/chitanda@main/releases/mihomo/version.txt"
 	if mod == "0" or mod == "" or not mod then
 		local urls = { raw, jsdelivr, jsdelivr_fastly }
 		for _, cdn in ipairs(cdn_list()) do
@@ -28,7 +28,7 @@ def patch_openclash(repo_dir):
 		return urls
 	end
 	if mod == "https://cdn.jsdelivr.net/" or mod == "https://fastly.jsdelivr.net/" or mod == "https://testingcf.jsdelivr.net/" then
-		return { mod .. "gh/violetaini/chitanda@main/releases/mihomo/version.txt", raw, jsdelivr }
+		return { mod .. "gh/chitanda-project/chitanda@main/releases/mihomo/version.txt", raw, jsdelivr }
 	end
 	return { mod .. raw, raw, jsdelivr }
 end
@@ -105,7 +105,7 @@ end
         # CHITANDA_CORE_RELEASE definition
         if "CHITANDA_CORE_RELEASE" not in sh_content:
             t1 = 'RELEASE_BRANCH=$(uci_get_config "release_branch" || echo "master")'
-            i1 = t1 + '\nCHITANDA_CORE_RELEASE="https://github.com/violetaini/chitanda/releases/download"'
+            i1 = t1 + '\nCHITANDA_CORE_RELEASE="https://github.com/chitanda-project/chitanda/releases/download"'
             sh_content = sh_content.replace(t1, i1, 1)
 
         # Version tracking file
@@ -179,7 +179,7 @@ end
         replacement_htm = """if (type === 'core' && !_isOix && smart_enable.value !== '1') {
             filename = 'clash-' + arch + '.tar.gz';
             var cv = (version && version !== '__latest__' && version.indexOf('alpha') === -1) ? version : 'v1.19.30';
-            var rawChitanda = 'https://github.com/violetaini/chitanda/releases/download/' + cv + '/' + filename;
+            var rawChitanda = 'https://github.com/chitanda-project/chitanda/releases/download/' + cv + '/' + filename;
             if (addr && addr !== '' && classifyAddr(addr) !== 'raw' && !isJsDelivr) {
                 return addr + rawChitanda;
             }
@@ -201,10 +201,10 @@ end
         target_c1 = 'local function build_version_url(cdn, file_type)\n\t\tif file_type == "core" and is_oix() then'
         replacement_c1 = '''local function build_version_url(cdn, file_type)
 \t\tif file_type == "core" and not is_oix() then
-\t\t\tlocal chitanda_raw = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
+\t\t\tlocal chitanda_raw = "https://raw.githubusercontent.com/chitanda-project/chitanda/main/releases/mihomo/version.txt"
 \t\t\tlocal ctype = classify_cdn(cdn)
 \t\t\tif ctype == "jsdelivr" then
-\t\t\t\treturn cdn .. "gh/violetaini/chitanda@main/releases/mihomo/version.txt"
+\t\t\t\treturn cdn .. "gh/chitanda-project/chitanda@main/releases/mihomo/version.txt"
 \t\t\telseif ctype == "proxy" then
 \t\t\t\treturn cdn .. chitanda_raw
 \t\t\tend
@@ -215,7 +215,7 @@ end
 
         target_c2 = 'local raw_ref = (core_ver ~= "" and core_ver ~= "__latest__") and core_ver or "core"\n\t\t\traw_core_url = "https://raw.githubusercontent.com/vernesong/OpenClash/" .. raw_ref .. "/" .. branch .. "/core_version"'
         replacement_c2 = '''if not is_oix() then
-\t\t\traw_core_url = "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt"
+\t\t\traw_core_url = "https://raw.githubusercontent.com/chitanda-project/chitanda/main/releases/mihomo/version.txt"
 \t\telse
 \t\t\tlocal raw_ref = (core_ver ~= "" and core_ver ~= "__latest__") and core_ver or "core"
 \t\t\traw_core_url = "https://raw.githubusercontent.com/vernesong/OpenClash/" .. raw_ref .. "/" .. branch .. "/core_version"

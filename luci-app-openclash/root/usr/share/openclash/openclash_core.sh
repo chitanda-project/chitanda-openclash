@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 . /lib/functions.sh
 . /usr/share/openclash/log.sh
 . /usr/share/openclash/uci.sh
@@ -52,7 +52,7 @@ OIX_TOKEN=$(uci_get_config "oix_token")
 small_flash_memory=$(uci_get_config "small_flash_memory")
 CPU_MODEL=$(uci_get_config "core_version")
 RELEASE_BRANCH=$(uci_get_config "release_branch" || echo "master")
-CHITANDA_CORE_RELEASE="https://github.com/violetaini/chitanda/releases/download"
+CHITANDA_CORE_RELEASE="https://github.com/chitanda-project/chitanda/releases/download"
 
 if [ -z "$DIRECT_CORE_URL" ]; then
    lua /usr/share/openclash/openclash_version.lua "$github_address_mod" 2>/dev/null
@@ -66,7 +66,7 @@ if [ -z "$DIRECT_CORE_URL" ]; then
          CORE_LV=$(jsonfilter -i /tmp/openclash_version_history.json -e "@.${RELEASE_BRANCH}.core_meta[0].version" 2>/dev/null)
       fi
       if [ -z "$CORE_LV" ] || echo "$CORE_LV" | grep -q "alpha-g"; then
-         CORE_LV=$(curl -fsSL -m 5 "https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt" 2>/dev/null | tr -d ' \r\n')
+         CORE_LV=$(curl -fsSL -m 5 "https://raw.githubusercontent.com/chitanda-project/chitanda/main/releases/mihomo/version.txt" 2>/dev/null | tr -d ' \r\n')
       fi
       if [ -z "$CORE_LV" ] || echo "$CORE_LV" | grep -q "alpha-g"; then
          CORE_LV="v1.19.30"
