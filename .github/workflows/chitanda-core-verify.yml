@@ -27,11 +27,11 @@ jobs:
 
       - name: Download and execute the Chitanda Meta core
         run: |
-          version_url=https://raw.githubusercontent.com/violetaini/chitanda/main/releases/mihomo/version.txt
+          version_url=https://raw.githubusercontent.com/chitanda-project/chitanda/main/releases/mihomo/version.txt
           version=$(curl -fsSL "$version_url")
           test "$version" = "$(printf '%s' "$version" | tr -d '\r\n')"
           test "$version" != ""
-          asset_url="https://github.com/violetaini/chitanda/releases/download/${version}/clash-linux-amd64-v1.tar.gz"
+          asset_url="https://github.com/chitanda-project/chitanda/releases/download/${version}/clash-linux-amd64-v1.tar.gz"
           curl -fsSL "$asset_url" -o core.tar.gz
           tar -tzf core.tar.gz | grep -x clash
           mkdir core
