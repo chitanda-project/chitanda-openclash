@@ -1,4 +1,4 @@
-﻿#!/usr/bin/lua
+#!/usr/bin/lua
 
 require "nixio"
 require "luci.model.uci"

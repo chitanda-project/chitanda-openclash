@@ -1,4 +1,4 @@
-﻿import os
+import os
 import sys
 
 def patch_openclash(repo_dir):

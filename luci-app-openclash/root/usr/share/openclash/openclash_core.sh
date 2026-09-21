@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 . /lib/functions.sh
 . /usr/share/openclash/log.sh
 . /usr/share/openclash/uci.sh
