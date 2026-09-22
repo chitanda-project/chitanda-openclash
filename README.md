@@ -1,16 +1,30 @@
-<h1 align="center">
-  <img src="https://raw.githubusercontent.com/vernesong/OpenClash/dev/img/logo.png" alt="Clash" width="200">
-  <br>OpenClash<br>
-</h1>
-  
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/chitanda-project/chitanda/main/public/avatar.webp" alt="Chitanda" width="120" />
+
+# 🌸 Chitanda OpenClash
+
+**OpenWrt / ルーター向け次世代プロキシソリューション**
+
+[![Release](https://img.shields.io/github/v/release/chitanda-project/chitanda-openclash?color=orange&style=flat-square)](https://github.com/chitanda-project/chitanda-openclash/releases)
+[![CI](https://github.com/chitanda-project/chitanda-openclash/actions/workflows/chitanda-core-verify.yml/badge.svg)](https://github.com/chitanda-project/chitanda-openclash/actions)
+[![Official Website](https://img.shields.io/badge/Official-chitanda.net-blue?style=flat-square)](https://chitanda.net)
+
 <p align="center">
-本插件是一个可运行在 OpenWrt 上的<a href="https://github.com/MetaCubeX/mihomo" target="_blank"> Mihomo(Clash) </a>客户端
-</p>
-<p align="center">
-兼容 Shadowsocks、ShadowsocksR、Vmess、Trojan、Snell 等协议，根据灵活的规则配置实现策略代理
+  <b>Chitanda OpenClash</b> は、OpenWrt / iStoreOS などのルーター環境向けに最適化された公式プロキシソリューションです。<br>
+  次世代プロキシコア <b><a href="https://github.com/chitanda-project/chitanda">Chitanda Core (Mihomo)</a></b> を内蔵し、ネイティブ <b>Chitanda プロトコル</b> による家庭内・ゲートウェイ全透過プロキシを提供します。
 </p>
 
-使用手册
+</div>
+
+> [!WARNING]
+> ### ⚠️ 免責事項 (Disclaimer)
+> 本プロジェクトおよび関連リソースは、学術研究、ネットワークセキュリティ検証、および正当な管理運用を目的として公開・提供されています。
+> 
+> 1. **法令遵守の義務**：本ソフトウェアおよび関連コードを利用する際は、**必ずご利用者ご自身の所在国・地域の法令および規則を遵守してください**。
+> 2. **利用の禁止**：本ソフトウェアの利用が所在国または地域の法令・規則に違反する場合、**いかなる目的であっても本ソフトウェアのダウンロード、インストール、実行、および二次配布を行わないでください**。
+> 3. **免責条項**：開発者およびプロジェクト保守管理者は、本ソフトウェアの使用、誤用、またはそれに関連して生じたいかなる損害、法的紛争、および責任についても一切の責任を負いません。
+
 ---
 
 
