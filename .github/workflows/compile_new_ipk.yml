@@ -202,25 +202,16 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: openclash-apk
-          path: ./
-
-      - name: Commit and Push New Version
-        run: |
-          rm -rf ./${{ github.ref_name }}/luci-app-openclash*
-          echo "v${{ needs.Get-Version.outputs.version }}" > ./${{ github.ref_name }}/version
-          echo "https://img.shields.io/badge/New Release-v${{ needs.Get-Version.outputs.version }}-orange.svg" >> ./${{ github.ref_name }}/version
-          cp ./luci-app-openclash_*.ipk "./${{ github.ref_name }}/"
-          cp ./luci-app-openclash-*.apk "./${{ github.ref_name }}/"
-          (cd "./${{ github.ref_name }}" && find . -maxdepth 1 -type f \( -name 'luci-app-openclash_*' -o -name 'luci-app-openclash-*' \) | sort | xargs sha256sum > checksums.txt 2>/dev/null || true)
-          rm -f ./luci-app-openclash_*.ipk
-          rm -f ./luci-app-openclash-*.apk
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add .
-          if git diff --staged --quiet; then
-            echo "No changes to commit, skipping."
-          else
-            git commit -m "Auto Release: v${{ needs.Get-Version.outputs.version }}"
-            git push
-          fi
+          tag_name: "v${{ needs.Get-Version.outputs.version }}"
+          name: "v${{ needs.Get-Version.outputs.version }}"
+          body: |
+            OpenClash `v${{ needs.Get-Version.outputs.version }}` with native **Chitanda Protocol** support.
+            
+            ### Package Standard:
+            - Pre-configured to automatically pull Chitanda-compatible Mihomo core.
+            - Includes both `.ipk` and `.apk` packages.
+          files: |
+            dist/*
+          draft: false
+          prerelease: false
+          make_latest: true
