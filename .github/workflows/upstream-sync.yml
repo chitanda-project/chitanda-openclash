@@ -84,15 +84,15 @@ jobs:
           git fetch upstream --tags
 
           # Merge upstream tag into main
-          git merge -X theirs "$TAG" --no-edit -m "chore(sync): sync upstream OpenClash $TAG" || (git merge --abort && git checkout "$TAG" -- luci-app-openclash)
+          git merge -X theirs "$TAG" --no-edit -m "chore(sync): sync upstream OpenClash $TAG" || (git rm -f .github/workflows/compile_dev_core.yml .github/workflows/compile_meta_core.yml .github/workflows/compile_premium_core.yml .github/workflows/master_release_sync.yml 2>/dev/null || true; git commit --no-edit) || (git merge --abort && git checkout "$TAG" -- luci-app-openclash)
 
           # Apply Chitanda patch
           python3 scripts/patch-openclash.py .
 
           # Commit and push
-          git add luci-app-openclash/
+          git add luci-app-openclash/ version.txt scripts/
           if ! git diff --staged --quiet; then
-            git commit -m "feat(core): apply Chitanda core redirection for $TAG"
+            git commit -m "feat(core): apply Chitanda core and plugin redirection for $TAG"
           fi
           
           git push origin main

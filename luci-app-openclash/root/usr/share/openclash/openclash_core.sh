@@ -22,7 +22,7 @@ restart=0
 UPDATE_SUCCESS=0
 github_address_mod=$(uci_get_config "github_address_mod" || echo 0)
 DIRECT_CORE_URL=""
-if [ -n "$2" ] && echo "$2" | grep -qE '^https?://'; then
+if [ -n "$2" ] && echo "$2" | grep -qE '^https?://' && ! ([ "$CORE_TYPE" = "Meta" ] && echo "$2" | grep -q "vernesong/OpenClash"); then
    DIRECT_CORE_URL="$2"
 fi
 if [ "$github_address_mod" = "0" ] && [ -z "$DIRECT_CORE_URL" ] && [ -z "$(echo $2 2>/dev/null |grep -E 'http|one_key_update')" ] && [ -z "$(echo $3 2>/dev/null |grep 'http')" ]; then
