@@ -552,9 +552,17 @@ function M.fetch_version_history(branch, force, cdn, latest_only)
 		local core_meta_latest = ""
 		local core_smart_latest = ""
 
-		local plugin_raw = try_fetch(build_fetch_urls(github_address_mod, "package/" .. branch .. "/version"))
-		if plugin_raw and plugin_raw ~= "" then
-			plugin_latest = trim(plugin_raw:match("^[^\n\r]*") or "")
+		plugin_latest = fetch_chitanda_plugin_version(github_address_mod)
+		if plugin_latest ~= "" then
+			result.plugin = { { version = plugin_latest, date = os.date("!%Y-%m-%dT%H:%M:%SZ"), sha = "chitanda" } }
+		else
+			local plugin_raw = try_fetch(build_fetch_urls(github_address_mod, "package/" .. branch .. "/version"))
+			if plugin_raw and plugin_raw ~= "" then
+				local ver = trim(plugin_raw:match("^[^\n\r]*") or "")
+				if M.is_valid_version(ver) then
+					plugin_latest = ver
+				end
+			end
 		end
 
 		if not cur_oix then
