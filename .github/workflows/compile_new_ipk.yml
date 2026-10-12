@@ -9,6 +9,10 @@ on:
       - '.github/workflows/compile_new_ipk.yml'
   workflow_dispatch:
 
+concurrency:
+  group: compile-openclash-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 

@@ -2,7 +2,7 @@ name: Upstream Sync & Auto Release
 
 on:
   schedule:
-    - cron: '0 3 * * *' # Daily at 03:00 UTC
+    - cron: '0 */3 * * *' # Every 3 hours
   workflow_dispatch:
     inputs:
       force_sync:
@@ -10,6 +10,10 @@ on:
         required: false
         default: false
         type: boolean
+
+concurrency:
+  group: upstream-sync-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -79,24 +83,42 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Add upstream remote and fetch
+          # 1. Backup Chitanda custom workflows to prevent upstream overwrites
+          mkdir -p /tmp/chitanda_workflows_backup
+          cp -rf .github/workflows/* /tmp/chitanda_workflows_backup/
+
+          # 2. Add upstream remote and fetch
           git remote add upstream https://github.com/vernesong/OpenClash.git || git remote set-url upstream https://github.com/vernesong/OpenClash.git
           git fetch upstream --tags
 
-          # Merge upstream tag into main
-          git merge -X theirs "$TAG" --no-edit -m "chore(sync): sync upstream OpenClash $TAG" || (git rm -f .github/workflows/compile_dev_core.yml .github/workflows/compile_meta_core.yml .github/workflows/compile_premium_core.yml .github/workflows/master_release_sync.yml 2>/dev/null || true; git commit --no-edit) || (git merge --abort && git checkout "$TAG" -- luci-app-openclash)
+          # 3. Merge upstream tag into main
+          git merge -X theirs "$TAG" --no-edit -m "chore(sync): sync upstream OpenClash $TAG" || (
+            echo "Resolving merge conflicts..."
+            git rm -f .github/workflows/compile_dev_core.yml .github/workflows/compile_meta_core.yml .github/workflows/compile_premium_core.yml .github/workflows/master_release_sync.yml 2>/dev/null || true
+            git commit --no-edit || true
+          ) || (
+            echo "Fallback: checking out upstream luci-app-openclash directly..."
+            git merge --abort || true
+            git checkout "$TAG" -- luci-app-openclash
+          )
 
-          # Apply Chitanda patch
+          # 4. Restore Chitanda custom workflows & remove obsolete upstream core workflows
+          cp -rf /tmp/chitanda_workflows_backup/* .github/workflows/
+          git rm -f .github/workflows/compile_dev_core.yml .github/workflows/compile_meta_core.yml .github/workflows/compile_premium_core.yml .github/workflows/master_release_sync.yml 2>/dev/null || true
+
+          # 5. Apply Chitanda patch
           python3 scripts/patch-openclash.py .
 
-          # Commit and push
-          git add luci-app-openclash/ version.txt scripts/
+          # 6. Commit and push
+          git add luci-app-openclash/ version.txt scripts/ .github/workflows/
           if ! git diff --staged --quiet; then
             git commit -m "feat(core): apply Chitanda core and plugin redirection for $TAG"
           fi
-          
+
+          git pull --rebase origin main || true
           git push origin main
 
+          # 7. Explicitly dispatch compilation workflow (since push from bot may not trigger on: push)
           echo "Triggering compile_new_ipk.yml workflow..."
           curl -s -X POST \
             -H "Accept: application/vnd.github+json" \
