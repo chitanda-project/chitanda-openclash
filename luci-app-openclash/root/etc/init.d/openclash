@@ -4042,6 +4042,8 @@ reload_service()
 
 boot()
 {
+   [ -f /usr/share/ucode/luci/http.uc ] && sed -i 's/HTTP_MAX_CONTENT = 1024\*100;/HTTP_MAX_CONTENT = 1024\*1024\*10;/g' /usr/share/ucode/luci/http.uc 2>/dev/null
+   [ -f /usr/lib/lua/luci/http.lua ] && sed -i 's/HTTP_MAX_CONTENT[ 	]*=[ 	]*1024\*100/HTTP_MAX_CONTENT      = 1024\*1024\*10/g' /usr/lib/lua/luci/http.lua 2>/dev/null
    delay_start=$(uci_get_config "delay_start" || echo 0)
    enable=$(uci_get_config "enable")
    if [ "$delay_start" -gt 0 ] && [ "$enable" == "1" ]; then

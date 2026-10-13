@@ -11,6 +11,8 @@ def patch_openclash(repo_dir):
     htm_file = os.path.join(repo_dir, "luci-app-openclash", "luasrc", "view", "openclash", "update.htm")
     controller_file = os.path.join(repo_dir, "luci-app-openclash", "luasrc", "controller", "openclash.lua")
     makefile_file = os.path.join(repo_dir, "luci-app-openclash", "Makefile")
+    uci_defaults_file = os.path.join(repo_dir, "luci-app-openclash", "root", "etc", "uci-defaults", "luci-openclash")
+    init_file = os.path.join(repo_dir, "luci-app-openclash", "root", "etc", "init.d", "openclash")
 
     # 0. Generate version.txt from Makefile
     pkg_version = "0.48.002"
@@ -460,6 +462,42 @@ end
         with open(controller_file, "w", encoding="utf-8") as f:
             f.write(c_content)
         print("  [+] Patched openclash.lua (Chitanda CDN plugin & core probe)")
+
+    # 7. Patch uci-defaults/luci-openclash
+    if os.path.exists(uci_defaults_file):
+        with open(uci_defaults_file, "r", encoding="utf-8") as f:
+            uci_content = f.read()
+
+        uci_http_fix = """#increase LuCI POST content size limit for large OpenClash configs / subscriptions
+if [ -f "/usr/share/ucode/luci/http.uc" ]; then
+\tsed -i 's/HTTP_MAX_CONTENT = 1024\\*100;/HTTP_MAX_CONTENT = 1024\\*1024\\*10;/g' /usr/share/ucode/luci/http.uc 2>/dev/null
+fi
+if [ -f "/usr/lib/lua/luci/http.lua" ]; then
+\tsed -i 's/HTTP_MAX_CONTENT[ \\t]*=[ \\t]*1024\\*100/HTTP_MAX_CONTENT      = 1024\\*1024\\*10/g' /usr/lib/lua/luci/http.lua 2>/dev/null
+fi
+"""
+        if "HTTP_MAX_CONTENT" not in uci_content:
+            target_uhttpd = 'if [ -x /etc/init.d/uhttpd ]; then\n\tuci -q set uhttpd.@uhttpd[0].max_requests=50\n\tuci -q set uhttpd.@uhttpd[0].script_timeout=3600\n\tuci -q commit uhttpd\nfi'
+            if target_uhttpd in uci_content:
+                uci_content = uci_content.replace(target_uhttpd, target_uhttpd + "\n\n" + uci_http_fix, 1)
+                with open(uci_defaults_file, "w", encoding="utf-8") as f:
+                    f.write(uci_content)
+                print("  [+] Patched uci-defaults/luci-openclash (LuCI HTTP_MAX_CONTENT limit increase)")
+
+    # 8. Patch init.d/openclash
+    if os.path.exists(init_file):
+        with open(init_file, "r", encoding="utf-8") as f:
+            init_content = f.read()
+
+        init_http_fix = """boot()
+{
+   [ -f /usr/share/ucode/luci/http.uc ] && sed -i 's/HTTP_MAX_CONTENT = 1024\\*100;/HTTP_MAX_CONTENT = 1024\\*1024\\*10;/g' /usr/share/ucode/luci/http.uc 2>/dev/null
+   [ -f /usr/lib/lua/luci/http.lua ] && sed -i 's/HTTP_MAX_CONTENT[ \\t]*=[ \\t]*1024\\*100/HTTP_MAX_CONTENT      = 1024\\*1024\\*10/g' /usr/lib/lua/luci/http.lua 2>/dev/null"""
+        if "HTTP_MAX_CONTENT" not in init_content and "boot()\n{\n   delay_start=" in init_content:
+            init_content = init_content.replace("boot()\n{\n   delay_start=", init_http_fix + "\n   delay_start=", 1)
+            with open(init_file, "w", encoding="utf-8") as f:
+                f.write(init_content)
+            print("  [+] Patched init.d/openclash (LuCI HTTP_MAX_CONTENT boot check)")
 
     print("[*] OpenClash Chitanda patching complete!")
 

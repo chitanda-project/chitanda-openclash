@@ -232,6 +232,14 @@ if [ -x /etc/init.d/uhttpd ]; then
 	uci -q set uhttpd.@uhttpd[0].script_timeout=3600
 	uci -q commit uhttpd
 fi
+
+#increase LuCI POST content size limit for large OpenClash configs / subscriptions
+if [ -f "/usr/share/ucode/luci/http.uc" ]; then
+	sed -i 's/HTTP_MAX_CONTENT = 1024\*100;/HTTP_MAX_CONTENT = 1024\*1024\*10;/g' /usr/share/ucode/luci/http.uc 2>/dev/null
+fi
+if [ -f "/usr/lib/lua/luci/http.lua" ]; then
+	sed -i 's/HTTP_MAX_CONTENT[ \t]*=[ \t]*1024\*100/HTTP_MAX_CONTENT      = 1024\*1024\*10/g' /usr/lib/lua/luci/http.lua 2>/dev/null
+fi
 #nginx backend (luci-nginx, newer LuCI)
 #gzip_types: nginx only compresses text/html by default, so the openclash
 #static assets (js/css/svg) and the JSON API answers are sent uncompressed
